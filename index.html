@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YEK — AI 智能助手</title>
+    <style>
+        :root {
+            --green-900: #0D3B1E;
+            --green-800: #14532D;
+            --green-700: #166534;
+            --green-600: #16A34A;
+            --green-500: #22C55E;
+            --green-100: #DCFCE7;
+            --green-50: #F0FDF4;
+            --white: #FFFFFF;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-400: #9CA3AF;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-800: #1F2937;
+            --gray-900: #111827;
+            --black: #0A0A0A;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: var(--gray-50);
+            color: var(--gray-800);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ============ Sidebar ============ */
+        .sidebar {
+            width: 280px;
+            background: var(--white);
+            border-right: 1px solid var(--gray-200);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            transition: var(--transition);
+        }
+        .sidebar-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sidebar-logo-icon {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, var(--green-700), var(--green-500));
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; color: white; font-weight: 700;
+        }
+        .sidebar-logo-text {
+            font-size: 18px; font-weight: 700; color: var(--green-900);
+            letter-spacing: 2px;
+        }
+        .btn-new-chat {
+            padding: 6px 14px;
+            background: var(--green-700);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+        .btn-new-chat:hover { background: var(--green-800); }
+
+        .sidebar-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+        .sidebar-list::-webkit-scrollbar { width: 4px; }
+        .sidebar-list::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 2px; }
+
+        .chat-item {
+            padding: 12px 14px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .chat-item:hover { background: var(--gray-100); }
+        .chat-item.active { background: var(--green-50); border: 1px solid var(--green-100); }
+        .chat-item-title {
+            flex: 1;
+            font-size: 14px;
+            color: var(--gray-700);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .chat-item.active .chat-item-title { color: var(--green-800); font-weight: 500; }
+        .chat-item-delete {
+            opacity: 0;
+            padding: 4px;
+            background: transparent;
+            border: none;
+            color: var(--gray-400);
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+        .chat-item:hover .chat-item-delete { opacity: 1; }
+        .chat-item-delete:hover { background: #FEE2E2; color: #DC2626; }
+
+        .sidebar-footer {
+            padding: 12px 20px;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .sidebar-footer-text {
+            font-size: 12px;
+            color: var(--gray-400);
+        }
+        .btn-settings {
+            padding: 6px 10px;
+            background: transparent;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            color: var(--gray-500);
+            cursor: pointer;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        .btn-settings:hover { background: var(--gray-100); }
+
+        /* ============ Main Chat Area ============ */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        /* Header */
+        .chat-header {
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--gray-200);
+            background: rgba(255,255,255,0.92);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .chat-header-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+        .model-select {
+            padding: 6px 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--gray-600);
+            background: var(--white);
+            cursor: pointer;
+            outline: none;
+            font-family: inherit;
+            -webkit-appearance: none;
+        }
+        .model-select:focus { border-color: var(--green-600); }
+
+        /* Messages */
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            scroll-behavior: smooth;
+        }
+        .messages::-webkit-scrollbar { width: 6px; }
+        .messages::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            max-width: 800px;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .message.user { margin-left: auto; flex-direction: row-reverse; }
+
+        .message-avatar {
+            width: 36px; height: 36px;
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 600;
+            flex-shrink: 0;
+        }
+        .message.user .message-avatar {
+            background: var(--green-700);
+            color: white;
+        }
+        .message.assistant .message-avatar {
+            background: var(--gray-100);
+            color: var(--green-700);
+            border: 1px solid var(--gray-200);
+        }
+
+        .message-content {
+            padding: 14px 18px;
+            border-radius: var(--radius-lg);
+            font-size: 15px;
+            line-height: 1.7;
+            max-width: 700px;
+            word-break: break-word;
+            position: relative;
+        }
+        .message.user .message-content {
+            background: var(--green-700);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .message.assistant .message-content {
+            background: var(--white);
+            color: var(--gray-800);
+            border: 1px solid var(--gray-200);
+            border-bottom-left-radius: 4px;
+        }
+
+        /* Copy button */
+        .message-copy {
+            position: absolute;
+            top: 8px; right: 8px;
+            padding: 4px 8px;
+            background: rgba(0,0,0,0.06);
+            border: none;
+            border-radius: 6px;
+            color: var(--gray-400);
+            font-size: 12px;
+            cursor: pointer;
+            opacity: 0;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+        .message:hover .message-copy { opacity: 1; }
+        .message-copy:hover { background: rgba(0,0,0,0.1); color: var(--gray-600); }
+
+        /* Markdown styles inside messages */
+        .message.assistant .message-content h1,
+        .message.assistant .message-content h2,
+        .message.assistant .message-content h3 {
+            margin: 12px 0 6px;
+            font-weight: 600;
+        }
+        .message.assistant .message-content h1 { font-size: 18px; }
+        .message.assistant .message-content h2 { font-size: 16px; }
+        .message.assistant .message-content h3 { font-size: 15px; }
+        .message.assistant .message-content p { margin: 6px 0; }
+        .message.assistant .message-content ul,
+        .message.assistant .message-content ol {
+            margin: 6px 0; padding-left: 20px;
+        }
+        .message.assistant .message-content li { margin: 3px 0; }
+        .message.assistant .message-content code {
+            background: var(--gray-100);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+            color: var(--green-800);
+        }
+        .message.assistant .message-content pre {
+            background: var(--gray-900);
+            color: #E5E7EB;
+            padding: 16px;
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+            margin: 10px 0;
+            position: relative;
+        }
+        .message.assistant .message-content pre code {
+            background: transparent;
+            padding: 0;
+            color: inherit;
+            font-size: 13px;
+        }
+        .code-lang {
+            position: absolute;
+            top: 8px; right: 12px;
+            font-size: 11px;
+            color: var(--gray-500);
+            font-family: inherit;
+        }
+        .btn-copy-code {
+            position: absolute;
+            top: 6px; right: 60px;
+            padding: 3px 8px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 4px;
+            color: var(--gray-400);
+            font-size: 11px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-copy-code:hover { background: rgba(255,255,255,0.2); color: white; }
+        .message.assistant .message-content strong { font-weight: 600; color: var(--gray-900); }
+        .message.assistant .message-content em { font-style: italic; }
+        .message.assistant .message-content blockquote {
+            border-left: 3px solid var(--green-500);
+            padding-left: 12px;
+            margin: 8px 0;
+            color: var(--gray-500);
+        }
+        .message.assistant .message-content table {
+            border-collapse: collapse;
+            margin: 10px 0;
+            width: 100%;
+            font-size: 14px;
+        }
+        .message.assistant .message-content th,
+        .message.assistant .message-content td {
+            border: 1px solid var(--gray-200);
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .message.assistant .message-content th {
+            background: var(--gray-50);
+            font-weight: 600;
+        }
+        .message.assistant .message-content hr {
+            border: none;
+            border-top: 1px solid var(--gray-200);
+            margin: 12px 0;
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 8px 0;
+        }
+        .typing-dot {
+            width: 7px; height: 7px;
+            background: var(--gray-400);
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-6px); }
+        }
+
+        /* ============ Input Area ============ */
+        .input-area {
+            padding: 16px 24px 24px;
+            background: var(--white);
+            border-top: 1px solid var(--gray-200);
+            flex-shrink: 0;
+        }
+        .input-wrapper {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .input-box {
+            flex: 1;
+            min-height: 48px;
+            max-height: 200px;
+            padding: 12px 16px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            font-size: 15px;
+            font-family: inherit;
+            color: var(--gray-800);
+            resize: none;
+            outline: none;
+            transition: var(--transition);
+            line-height: 1.5;
+            background: var(--white);
+        }
+        .input-box:focus { border-color: var(--green-600); box-shadow: 0 0 0 3px rgba(22,163,74,0.1); }
+        .input-box::placeholder { color: var(--gray-400); }
+        .btn-send {
+            width: 48px; height: 48px;
+            background: var(--green-700);
+            color: white;
+            border: none;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            font-size: 20px;
+            display: flex; align-items: center; justify-content: center;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+        .btn-send:hover { background: var(--green-800); }
+        .btn-send:disabled { background: var(--gray-300); cursor: not-allowed; }
+        .input-hint {
+            text-align: center;
+            font-size: 12px;
+            color: var(--gray-400);
+            margin-top: 8px;
+        }
+
+        /* ============ Welcome Screen ============ */
+        .welcome {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+        }
+        .welcome-icon {
+            width: 64px; height: 64px;
+            background: linear-gradient(135deg, var(--green-700), var(--green-500));
+            border-radius: var(--radius-lg);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; color: white;
+            margin-bottom: 20px;
+        }
+        .welcome h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 8px;
+        }
+        .welcome p {
+            font-size: 15px;
+            color: var(--gray-400);
+            margin-bottom: 32px;
+        }
+        .quick-prompts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            max-width: 600px;
+        }
+        .quick-prompt {
+            padding: 10px 18px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: var(--transition);
+            background: var(--white);
+            font-family: inherit;
+        }
+        .quick-prompt:hover {
+            border-color: var(--green-600);
+            color: var(--green-700);
+            background: var(--green-50);
+        }
+
+        /* ============ Settings Modal ============ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: var(--white);
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            animation: fadeIn 0.3s ease;
+        }
+        .modal h3 { font-size: 18px; margin-bottom: 20px; color: var(--gray-800); }
+        .modal label { display: block; font-size: 13px; color: var(--gray-600); margin-bottom: 6px; font-weight: 500; }
+        .modal input[type="text"],
+        .modal input[type="password"] {
+            width: 100%; padding: 10px 14px;
+            border: 1.5px solid var(--gray-200);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            margin-bottom: 16px;
+            outline: none;
+        }
+        .modal input:focus { border-color: var(--green-600); }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .btn { padding: 10px 20px; border: none; border-radius: var(--radius-md); font-size: 14px; font-weight: 500; cursor: pointer; transition: var(--transition); font-family: inherit; }
+        .btn-primary { background: var(--green-700); color: white; }
+        .btn-primary:hover { background: var(--green-800); }
+        .btn-secondary { background: var(--gray-100); color: var(--gray-700); }
+        .btn-secondary:hover { background: var(--gray-200); }
+        .btn-sm { padding: 6px 14px; font-size: 13px; }
+
+        /* ============ Toast ============ */
+        .toast {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--gray-800);
+            color: var(--white);
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            z-index: 2000;
+            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        /* ============ Mobile ============ */
+        .mobile-header {
+            display: none;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--gray-200);
+            background: var(--white);
+            align-items: center;
+            gap: 12px;
+        }
+        .btn-mobile-menu {
+            padding: 8px;
+            background: transparent;
+            border: none;
+            color: var(--gray-600);
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -280px;
+                top: 0; bottom: 0;
+                z-index: 500;
+                box-shadow: none;
+                transition: left 0.3s ease;
+            }
+            .sidebar.open {
+                left: 0;
+                box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+            }
+            .mobile-header { display: flex; }
+            .messages { padding: 16px; }
+            .input-area { padding: 12px 16px 16px; }
+            .quick-prompts { flex-direction: column; align-items: stretch; }
+        }
+
+        /* Sidebar overlay for mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 499;
+        }
+        .sidebar-overlay.show { display: block; }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <div class="sidebar-logo-icon">Y</div>
+                <div class="sidebar-logo-text">YEK</div>
+            </div>
+            <button class="btn-new-chat" onclick="newChat()">+ 新对话</button>
+        </div>
+        <div class="sidebar-list" id="chatList"></div>
+        <div class="sidebar-footer">
+            <span class="sidebar-footer-text">by 亚尔肯</span>
+            <button class="btn-settings" onclick="openSettings()">⚙️</button>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="main">
+        <!-- Mobile Header -->
+        <div class="mobile-header">
+            <button class="btn-mobile-menu" onclick="openSidebar()">☰</button>
+            <span style="font-size:16px;font-weight:600;color:var(--gray-800)">YEK</span>
+        </div>
+
+        <!-- Chat Header -->
+        <div class="chat-header">
+            <div class="chat-header-title" id="chatTitle">YEK — AI 智能助手</div>
+            <select class="model-select" id="modelSelect">
+                <option value="deepseek-chat">DeepSeek Chat</option>
+                <option value="deepseek-reasoner">DeepSeek Reasoner</option>
+            </select>
+        </div>
+
+        <!-- Messages or Welcome -->
+        <div class="messages" id="messages" style="display:none"></div>
+        <div class="welcome" id="welcome">
+            <div class="welcome-icon">Y</div>
+            <h2>你好，我是 YEK</h2>
+            <p>基于 DeepSeek 的 AI 智能助手，有什么可以帮你的？</p>
+            <div class="quick-prompts">
+                <button class="quick-prompt" onclick="useQuickPrompt(this)">帮我写一段 Python 爬虫代码</button>
+                <button class="quick-prompt" onclick="useQuickPrompt(this)">解释一下什么是机器学习</button>
+                <button class="quick-prompt" onclick="useQuickPrompt(this)">帮我写一封英文求职邮件</button>
+                <button class="quick-prompt" onclick="useQuickPrompt(this)">推荐几本关于 AI 的书</button>
+            </div>
+        </div>
+
+        <!-- Input -->
+        <div class="input-area">
+            <div class="input-wrapper">
+                <textarea class="input-box" id="inputBox" placeholder="输入消息... (Shift+Enter 换行)" rows="1"></textarea>
+                <button class="btn-send" id="sendBtn" onclick="sendMessage()">↑</button>
+            </div>
+            <div class="input-hint">YEK 由 DeepSeek 驱动 · 按 Enter 发送</div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <h3>⚙️ 设置</h3>
+            <label>DeepSeek API Key</label>
+            <input type="password" id="apiKeyInput" placeholder="sk-...">
+            <div class="modal-actions">
+                <button class="btn btn-secondary btn-sm" onclick="closeSettings()">取消</button>
+                <button class="btn btn-primary btn-sm" onclick="saveSettings()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ============================================
+        // Config
+        // ============================================
+        var DEFAULT_API_KEY = '***';
+        var API_URL = 'https://api.deepseek.com/v1/chat/completions';
+        var STORAGE_KEY = 'yek-chats';
+        var API_KEY_STORAGE = 'yek-api-key';
+
+        // ============================================
+        // State
+        // ============================================
+        var chats = [];
+        var currentChatId = null;
+        var isStreaming = false;
+
+        // ============================================
+        // Init
+        // ============================================
+        function init() {
+            var savedKey = localStorage.getItem(API_KEY_STORAGE);
+            document.getElementById('apiKeyInput').value = savedKey || DEFAULT_API_KEY;
+            if (!savedKey) localStorage.setItem(API_KEY_STORAGE, DEFAULT_API_KEY);
+
+            loadChats();
+            renderChatList();
+
+            // Auto-resize textarea
+            var input = document.getElementById('inputBox');
+            input.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+            });
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!isStreaming) sendMessage();
+                }
+            });
+        }
+
+        function getApiKey() { return localStorage.getItem(API_KEY_STORAGE) || DEFAULT_API_KEY; }
+        function openSettings() { document.getElementById('settingsModal').classList.add('show'); }
+        function closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
+        function saveSettings() {
+            var key = document.getElementById('apiKeyInput').value.trim();
+            if (!key) { showToast('请输入 API Key'); return; }
+            localStorage.setItem(API_KEY_STORAGE, key);
+            closeSettings();
+            showToast('✅ API Key 已保存');
+        }
+
+        // ============================================
+        // Sidebar (Mobile)
+        // ============================================
+        function openSidebar() {
+            document.getElementById('sidebar').classList.add('open');
+            document.getElementById('sidebarOverlay').classList.add('show');
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('show');
+        }
+
+        // ============================================
+        // Chat Management
+        // ============================================
+        function loadChats() {
+            try { chats = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+            catch(e) { chats = []; }
+        }
+
+        function saveChats() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
+        }
+
+        function newChat() {
+            var chat = {
+                id: Date.now(),
+                title: '新对话',
+                messages: [],
+                model: document.getElementById('modelSelect').value
+            };
+            chats.unshift(chat);
+            saveChats();
+            currentChatId = chat.id;
+            renderChatList();
+            showWelcome();
+            closeSidebar();
+        }
+
+        function switchChat(id) {
+            currentChatId = id;
+            var chat = chats.find(function(c) { return c.id === id; });
+            if (!chat) return;
+            document.getElementById('modelSelect').value = chat.model || 'deepseek-chat';
+            renderChatList();
+            renderMessages(chat);
+            closeSidebar();
+        }
+
+        function deleteChat(id, e) {
+            e.stopPropagation();
+            chats = chats.filter(function(c) { return c.id !== id; });
+            saveChats();
+            if (currentChatId === id) {
+                currentChatId = chats.length > 0 ? chats[0].id : null;
+                if (currentChatId) switchChat(currentChatId);
+                else showWelcome();
+            }
+            renderChatList();
+        }
+
+        function renderChatList() {
+            var list = document.getElementById('chatList');
+            if (chats.length === 0) {
+                list.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--gray-400);font-size:14px">暂无对话<br>点击 "+ 新对话" 开始</div>';
+                return;
+            }
+            var html = '';
+            chats.forEach(function(chat) {
+                var active = chat.id === currentChatId ? ' active' : '';
+                html += '<div class="chat-item' + active + '" onclick="switchChat(' + chat.id + ')">' +
+                    '<div class="chat-item-title">' + escapeHtml(chat.title) + '</div>' +
+                    '<button class="chat-item-delete" onclick="deleteChat(' + chat.id + ', event)" title="删除">✕</button>' +
+                '</div>';
+            });
+            list.innerHTML = html;
+        }
+
+        // ============================================
+        // Messages
+        // ============================================
+        function showWelcome() {
+            document.getElementById('welcome').style.display = 'flex';
+            document.getElementById('messages').style.display = 'none';
+            document.getElementById('chatTitle').textContent = 'YEK — AI 智能助手';
+        }
+
+        function showMessages() {
+            document.getElementById('welcome').style.display = 'none';
+            document.getElementById('messages').style.display = 'block';
+        }
+
+        function getCurrentChat() {
+            return chats.find(function(c) { return c.id === currentChatId; });
+        }
+
+        function renderMessages(chat) {
+            if (!chat || chat.messages.length === 0) { showWelcome(); return; }
+            showMessages();
+            document.getElementById('chatTitle').textContent = chat.title;
+
+            var container = document.getElementById('messages');
+            var html = '';
+            chat.messages.forEach(function(msg, i) {
+                html += buildMessageHtml(msg.role, msg.content, i);
+            });
+            container.innerHTML = html;
+            scrollToBottom();
+        }
+
+        function buildMessageHtml(role, content, index) {
+            var avatar = role === 'user' ? '你' : 'Y';
+            var rendered = role === 'assistant' ? renderMarkdown(content) : escapeHtml(content);
+            var copyBtn = role === 'assistant' ? '<button class="message-copy" onclick="copyMessage(' + index + ')">复制</button>' : '';
+            return '<div class="message ' + role + '">' +
+                '<div class="message-avatar">' + avatar + '</div>' +
+                '<div class="message-content">' + rendered + copyBtn + '</div>' +
+            '</div>';
+        }
+
+        function appendMessage(role, content) {
+            var container = document.getElementById('messages');
+            showMessages();
+            var index = getCurrentChat().messages.length;
+            var div = document.createElement('div');
+            div.innerHTML = buildMessageHtml(role, content, index);
+            container.appendChild(div.firstChild);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            var m = document.getElementById('messages');
+            m.scrollTop = m.scrollHeight;
+        }
+
+        function copyMessage(index) {
+            var chat = getCurrentChat();
+            if (!chat || !chat.messages[index]) return;
+            copyText(chat.messages[index].content);
+            showToast('✅ 已复制');
+        }
+
+        function useQuickPrompt(btn) {
+            document.getElementById('inputBox').value = btn.textContent;
+            document.getElementById('inputBox').focus();
+        }
+
+        // ============================================
+        // Send Message
+        // ============================================
+        function sendMessage() {
+            var input = document.getElementById('inputBox');
+            var text = input.value.trim();
+            if (!text || isStreaming) return;
+
+            // Auto-create chat if none
+            if (!currentChatId) {
+                newChat();
+            }
+
+            var chat = getCurrentChat();
+            if (!chat) return;
+
+            // Update chat model
+            chat.model = document.getElementById('modelSelect').value;
+
+            // Update title from first message
+            if (chat.messages.length === 0) {
+                chat.title = text.substring(0, 30) + (text.length > 30 ? '...' : '');
+                renderChatList();
+                document.getElementById('chatTitle').textContent = chat.title;
+            }
+
+            // Add user message
+            chat.messages.push({ role: 'user', content: text });
+            saveChats();
+            appendMessage('user', text);
+
+            // Clear input
+            input.value = '';
+            input.style.height = 'auto';
+
+            // Call API
+            streamResponse(chat);
+        }
+
+        // ============================================
+        // Streaming API
+        // ============================================
+        function streamResponse(chat) {
+            isStreaming = true;
+            var btn = document.getElementById('sendBtn');
+            btn.disabled = true;
+            btn.innerHTML = '...';
+
+            // Add typing indicator
+            var container = document.getElementById('messages');
+            var typingDiv = document.createElement('div');
+            typingDiv.className = 'message assistant';
+            typingDiv.id = 'typingMessage';
+            typingDiv.innerHTML = '<div class="message-avatar">Y</div>' +
+                '<div class="message-content"><div class="typing-indicator">' +
+                '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>' +
+                '</div></div>';
+            container.appendChild(typingDiv);
+            scrollToBottom();
+
+            // Build messages array for API
+            var apiMessages = chat.messages.map(function(m) {
+                return { role: m.role, content: m.content };
+            });
+
+            fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + getApiKey()
+                },
+                body: JSON.stringify({
+                    model: chat.model || 'deepseek-chat',
+                    messages: apiMessages,
+                    stream: true,
+                    temperature: 0.7,
+                    max_tokens: 4096
+                })
+            }).then(function(response) {
+                if (!response.ok) throw new Error('API 请求失败 (' + response.status + ')');
+                var reader = response.body.getReader();
+                var decoder = new TextDecoder();
+                var buffer = '';
+                var fullContent = '';
+
+                function readChunk() {
+                    return reader.read().then(function(result) {
+                        if (result.done) {
+                            // Stream complete
+                            finishStream(fullContent, chat, btn);
+                            return;
+                        }
+
+                        buffer += decoder.decode(result.value, { stream: true });
+                        var lines = buffer.split('\n');
+                        buffer = lines.pop() || '';
+
+                        for (var i = 0; i < lines.length; i++) {
+                            var line = lines[i].trim();
+                            if (!line || line === 'data: [DONE]') continue;
+                            if (!line.startsWith('data: ')) continue;
+
+                            try {
+                                var data = JSON.parse(line.substring(6));
+                                var delta = data.choices && data.choices[0] && data.choices[0].delta;
+                                if (delta && delta.content) {
+                                    fullContent += delta.content;
+                                    updateStreamContent(fullContent);
+                                }
+                            } catch(e) { /* ignore parse errors */ }
+                        }
+
+                        return readChunk();
+                    });
+                }
+
+                return readChunk();
+            }).catch(function(err) {
+                console.error(err);
+                finishStream('❌ 请求失败: ' + err.message, chat, btn);
+            });
+        }
+
+        function updateStreamContent(content) {
+            var typingDiv = document.getElementById('typingMessage');
+            if (!typingDiv) return;
+            var rendered = renderMarkdown(content);
+            var msgContent = typingDiv.querySelector('.message-content');
+            msgContent.innerHTML = rendered;
+            scrollToBottom();
+        }
+
+        function finishStream(content, chat, btn) {
+            var typingDiv = document.getElementById('typingMessage');
+            if (typingDiv) typingDiv.remove();
+
+            chat.messages.push({ role: 'assistant', content: content });
+            saveChats();
+            appendMessage('assistant', content);
+
+            isStreaming = false;
+            btn.disabled = false;
+            btn.innerHTML = '↑';
+        }
+
+        // ============================================
+        // Markdown Renderer (simple)
+        // ============================================
+        function renderMarkdown(text) {
+            if (!text) return '';
+
+            var html = escapeHtml(text);
+
+            // Code blocks with language
+            html = html.replace(/```(\w*)\n([\s\S]*?)```/g, function(match, lang, code) {
+                var langLabel = lang ? '<span class="code-lang">' + lang + '</span>' : '';
+                return '<pre>' + langLabel + '<button class="btn-copy-code" onclick="copyCodeBlock(this)">复制</button><code>' + code.trim() + '</code></pre>';
+            });
+
+            // Inline code
+            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+            // Bold
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+            // Italic
+            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+            // Headers
+            html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+            html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+            html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+            // Blockquote
+            html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+
+            // Unordered list
+            html = html.replace(/^[*-] (.+)$/gm, '<li>$1</li>');
+            html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+
+            // Ordered list
+            html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+
+            // Horizontal rule
+            html = html.replace(/^---$/gm, '<hr>');
+
+            // Paragraphs (double newline)
+            html = html.replace(/\n\n/g, '</p><p>');
+            html = '<p>' + html + '</p>';
+
+            // Single newline to <br>
+            html = html.replace(/\n/g, '<br>');
+
+            // Clean up empty paragraphs
+            html = html.replace(/<p>\s*<\/p>/g, '');
+            html = html.replace(/<p>\s*(<h[123]>)/g, '$1');
+            html = html.replace(/(<\/h[123]>)\s*<\/p>/g, '$1');
+            html = html.replace(/<p>\s*(<pre>)/g, '$1');
+            html = html.replace(/(<\/pre>)\s*<\/p>/g, '$1');
+            html = html.replace(/<p>\s*(<ul>)/g, '$1');
+            html = html.replace(/(<\/ul>)\s*<\/p>/g, '$1');
+            html = html.replace(/<p>\s*(<blockquote>)/g, '$1');
+            html = html.replace(/(<\/blockquote>)\s*<\/p>/g, '$1');
+            html = html.replace(/<p>\s*(<hr>)/g, '$1');
+            html = html.replace(/(<hr>)\s*<\/p>/g, '$1');
+
+            return html;
+        }
+
+        function escapeHtml(text) {
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============================================
+        // Copy
+        // ============================================
+        function copyText(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text);
+            } else {
+                var ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.left = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+            }
+        }
+
+        function copyCodeBlock(btn) {
+            var code = btn.parentElement.querySelector('code').textContent;
+            copyText(code);
+            btn.textContent = '已复制';
+            setTimeout(function() { btn.textContent = '复制'; }, 1500);
+        }
+
+        // ============================================
+        // Toast
+        // ============================================
+        function showToast(msg) {
+            var toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(function() { toast.classList.remove('show'); }, 2500);
+        }
+
+        // ============================================
+        // Start
+        // ============================================
+        init();
+    </script>
+</body>
+</html>
